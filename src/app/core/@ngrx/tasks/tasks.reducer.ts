@@ -21,9 +21,22 @@ const reducer = createReducer(
     console.log('UPDATE_TASK action being handled!');
     return { ...state };
   }),
-  on(TasksActions.completeTask, state => {
+  on(TasksActions.completeTask, (state, props) => {
     console.log('COMPLETE_TASK action being handled!');
-    return { ...state };
+
+    const id = props.task.id;
+    const data = state.data.map(t => {
+      if (t.id === id) {
+        return { ...props.task, done: true };
+      }
+
+      return t;
+    });
+
+    return {
+      ...state,
+      data
+    };
   }),
   on(TasksActions.deleteTask, state => {
     console.log('DELETE_TASK action being handled!');

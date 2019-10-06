@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 // @Ngrx
 import { Store, select } from '@ngrx/store';
 import { AppState, TasksState } from './../../../core/@ngrx';
+import * as TasksActions from './../../../core/@ngrx/tasks/tasks.actions';
 
 // rxjs
 import { Observable } from 'rxjs';
 
-import { TaskModel } from './../../models/task.model';
+import { TaskModel, Task } from './../../models/task.model';
 import { TaskPromiseService } from './../../services';
 
 @Component({
@@ -37,7 +38,13 @@ export class TaskListComponent implements OnInit {
   }
 
   onCompleteTask(task: TaskModel): void {
-    this.updateTask(task).catch(err => console.log(err));
+    // this.updateTask(task).catch(err => console.log(err));
+
+    // task is not plain object
+    // taskToComplete is a plain object
+    const taskToComplete: Task = { ...task };
+    this.store.dispatch(TasksActions.completeTask({ task: taskToComplete }));
+
   }
 
   onEditTask(task: TaskModel): void {
@@ -52,14 +59,14 @@ export class TaskListComponent implements OnInit {
       .catch(err => console.log(err));
   }
 
-  private async updateTask(task: TaskModel) {
-    const updatedTask = await this.taskPromiseService.updateTask({
-      ...task,
-      done: true
-    });
+  // private async updateTask(task: TaskModel) {
+  //   const updatedTask = await this.taskPromiseService.updateTask({
+  //     ...task,
+  //     done: true
+  //   });
 
-    const tasks: TaskModel[] = await this.tasks;
-    const index = tasks.findIndex(t => t.id === updatedTask.id);
-    tasks[index] = { ...updatedTask };
-  }
+  //   const tasks: TaskModel[] = await this.tasks;
+  //   const index = tasks.findIndex(t => t.id === updatedTask.id);
+  //   tasks[index] = { ...updatedTask };
+  // }
 }
