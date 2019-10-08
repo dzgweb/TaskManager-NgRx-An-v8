@@ -44,7 +44,6 @@ export class TaskListComponent implements OnInit {
     // taskToComplete is a plain object
     const taskToComplete: Task = { ...task };
     this.store.dispatch(TasksActions.completeTask({ task: taskToComplete }));
-
   }
 
   onEditTask(task: TaskModel): void {
