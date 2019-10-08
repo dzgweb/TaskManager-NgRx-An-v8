@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 
 // @NgRx
 import { StoreModule } from '@ngrx/store';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { environment } from './../../../environments/environment';
 
 import { TasksStoreModule } from './tasks/tasks-store.module';
 import { metaReducers } from './meta-reducers';
@@ -22,7 +24,9 @@ import { metaReducers } from './meta-reducers';
         strictActionSerializability: true
       }
     }),
-    TasksStoreModule,
+    // Instrumentation must be imported after importing StoreModule (config is optional)
+    !environment.production ? StoreDevtoolsModule.instrument() : [],
+    TasksStoreModule
   ]
 })
 export class RootStoreModule { }
