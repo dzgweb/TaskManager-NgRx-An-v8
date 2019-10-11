@@ -4,6 +4,15 @@ import { Task } from './../../../tasks/models/task.model';
 
 export const getTasks = createAction('[Tasks] GET_TASKS');
 
+export const getTasksSuccess = createAction(
+  '[Tasks Effects] GET_TASKS_SUCCEESS',
+  props<{ tasks: Task[] }>()
+);
+export const getTasksError = createAction(
+  '[Tasks Effects] GET_TASKS_ERROR',
+  props<{ error: Error | string }>()
+);
+
 export const getTask = createAction(
   '[Tasks] GET_TASK',
   props<{ taskID: number }>()
