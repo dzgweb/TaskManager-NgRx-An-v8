@@ -1,50 +1,82 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 
 // rxjs
-import { switchMap, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-import { TaskModel } from './../../models/task.model';
-import { TaskPromiseService } from './../../services';
+// @NgRx
+import { Store, select } from '@ngrx/store';
+import { AppState, TasksState } from './../../../core/@ngrx';
+import * as TasksActions from './../../../core/@ngrx/tasks/tasks.actions';
+
+import { TaskModel, Task } from './../../models/task.model';
 
 @Component({
   templateUrl: './task-form.component.html',
   styleUrls: ['./task-form.component.css']
 })
-export class TaskFormComponent implements OnInit {
+export class TaskFormComponent implements OnInit, OnDestroy {
   task: TaskModel;
+  private componentDestroyed$: Subject<void> = new Subject<void>();
 
   constructor(
-    private taskPromiseService: TaskPromiseService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private store: Store<AppState>
   ) {}
 
   ngOnInit(): void {
-    this.task = new TaskModel();
+    let observer = {
+      next: tasksState => {
+        if (tasksState.selectedTask) {
+          this.task = {...tasksState.selectedTask} as TaskModel;
+        } else {
+          this.task = new TaskModel();
+        }
+      },
+      error(err) {
+        console.log(err);
+      },
+      complete() {
+        console.log('Stream is completed');
+      }
+    };
 
-    this.route.paramMap
+    this.store
       .pipe(
-        switchMap((params: ParamMap) => {
-          return params.get('taskID')
-            ? this.taskPromiseService.getTask(+params.get('taskID'))
-            : Promise.resolve(null);
-        })
+        select('tasks'),
+        takeUntil(this.componentDestroyed$)
       )
-      .subscribe(
-        // when Promise.resolve(null) => task = null => {...null} => {}
-        task => (this.task = { ...task }),
-        err => console.log(err)
-      );
+      .subscribe(observer);
+
+    observer = {
+      ...observer,
+      next: (params: ParamMap) => {
+        const id = params.get('taskID');
+        if (id) {
+          this.store.dispatch(TasksActions.getTask({ taskID: +id }));
+        }
+      }
+    };
+
+    this.route.paramMap.subscribe(observer);
+
+  }
+
+  ngOnDestroy(): void {
+    this.componentDestroyed$.next();
+    this.componentDestroyed$.complete();
   }
 
   onSaveTask() {
-    const task = { ...this.task };
+    const task = { ...this.task } as Task;
 
-    const method = task.id ? 'updateTask' : 'createTask';
-    this.taskPromiseService[method](task)
-      .then(() => this.onGoBack())
-      .catch(err => console.log(err));
+    if (task.id) {
+      this.store.dispatch(TasksActions.updateTask({ task }));
+    } else {
+      this.store.dispatch(TasksActions.createTask({ task }));
+    }
   }
 
   onGoBack(): void {

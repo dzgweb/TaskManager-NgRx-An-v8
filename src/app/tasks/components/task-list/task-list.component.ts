@@ -10,7 +10,6 @@ import * as TasksActions from './../../../core/@ngrx/tasks/tasks.actions';
 import { Observable } from 'rxjs';
 
 import { TaskModel, Task } from './../../models/task.model';
-import { TaskPromiseService } from './../../services';
 
 @Component({
   templateUrl: './task-list.component.html',
@@ -22,14 +21,14 @@ export class TaskListComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private taskPromiseService: TaskPromiseService,
     private store: Store<AppState>
   ) {}
 
   ngOnInit() {
     console.log('We have a store! ', this.store);
     this.tasksState$ = this.store.pipe(select('tasks'));
-    // this.tasks = this.taskPromiseService.getTasks();
+
+    this.store.dispatch(TasksActions.getTasks());
   }
 
   onCreateTask() {
@@ -38,11 +37,9 @@ export class TaskListComponent implements OnInit {
   }
 
   onCompleteTask(task: TaskModel): void {
-    // this.updateTask(task).catch(err => console.log(err));
-
     // task is not plain object
     // taskToComplete is a plain object
-    const taskToComplete: Task = { ...task };
+    const taskToComplete: Task = { ...task, done: true };
     this.store.dispatch(TasksActions.completeTask({ task: taskToComplete }));
   }
 
@@ -52,20 +49,7 @@ export class TaskListComponent implements OnInit {
   }
 
   onDeleteTask(task: TaskModel) {
-    this.taskPromiseService
-      .deleteTask(task)
-      .then(() => (this.tasks = this.taskPromiseService.getTasks()))
-      .catch(err => console.log(err));
+    const taskToDelete: Task = { ...task };
+    this.store.dispatch(TasksActions.deleteTask({ task: taskToDelete }));
   }
-
-  // private async updateTask(task: TaskModel) {
-  //   const updatedTask = await this.taskPromiseService.updateTask({
-  //     ...task,
-  //     done: true
-  //   });
-
-  //   const tasks: TaskModel[] = await this.tasks;
-  //   const index = tasks.findIndex(t => t.id === updatedTask.id);
-  //   tasks[index] = { ...updatedTask };
-  // }
 }
